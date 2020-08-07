@@ -1,0 +1,25 @@
+registry.path: /filebeat/registry
+filebeat.inputs:
+  - type: log
+    paths:
+      - /logs/*
+    multiline.pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
+    multiline.negate: true
+    multiline.match: after
+    tags: ["scrapy"]
+
+output.logstash:
+  hosts: ["logstash"]
+  enabled: true
+
+output.elasticsearch:
+  hosts: ["elasticsearch"]
+  enabled: false
+
+setup.kibana:
+  host: "kibana:5601"
+  enabled: false
+
+output.console:
+  pretty: true
+  enabled: false

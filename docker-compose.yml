@@ -1,0 +1,62 @@
+version: '2.2'
+services:
+    elasticsearch:
+        container_name: elastic
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.6.1
+        environment:
+            ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+            discovery.type: single-node
+        volumes:
+            - ./elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
+        ports:
+            - 9200:9200
+            - 9300:9300
+        networks:
+            - elastic
+
+    logstash:
+        container_name: logstash
+        image: docker.elastic.co/logstash/logstash:7.6.1
+        environment:
+            LS_JAVA_OPTS: "-Xms256m -Xmx256m"
+        volumes:
+            - ./logstash:/usr/share/logstash/pipeline:ro
+        command:
+            --config.reload.automatic
+        # depends_on:
+        #     - elasticsearch
+        ports:
+            - 5044:5044
+            - 9600:9600
+        networks:
+            - elastic
+
+    kibana:
+        container_name: kibana
+        image: docker.elastic.co/kibana/kibana:7.6.1
+        ports:
+            - 5601:5601
+        depends_on:
+            - elasticsearch
+        networks:
+            - elastic
+
+    filebeat:
+        container_name: filebeat
+        image: docker.elastic.co/beats/filebeat:7.6.1
+        volumes:
+            - /home/reboot/home_work/cvmde/logs/:/logs
+            - ./filebeat/registry:/filebeat/registry
+            - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
+        # depends_on:
+        #     - logstash
+        links:
+            - logstash:logstash
+            - kibana:kibana
+            - elasticsearch:elasticsearch
+        networks:
+            - elastic
+
+networks:
+    elastic:
+        driver: bridge
